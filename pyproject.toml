@@ -10,9 +10,5 @@ dependencies = [
     "text-flappy-bird-gym",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.uv.sources]
 text-flappy-bird-gym = { git = "https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym.git" }
