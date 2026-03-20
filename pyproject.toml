@@ -1,0 +1,11 @@
+[project]
+name = "tfb"
+version = "0.1.0"
+description = "[CentraleSupélec] Reinforcement Learning Project on the Text Flappy Bird Game."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

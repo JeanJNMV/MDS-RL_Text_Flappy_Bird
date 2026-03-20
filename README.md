@@ -1,0 +1,1 @@
+This repository contains the code related to the project on Text Flappy Bird of the "Reinforcement Learning" course at CentraleSupélec. 
