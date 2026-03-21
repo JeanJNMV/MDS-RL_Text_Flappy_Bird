@@ -10,3 +10,6 @@ wheels/
 .venv
 
 test.ipynb
+text-flappy-bird-gym
+*copy*
+output/

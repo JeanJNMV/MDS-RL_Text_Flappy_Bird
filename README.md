@@ -1,1 +1,1 @@
-This repository contains the code related to the project on [Text Flappy Bird](https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym) of the "Reinforcement Learning" course at CentraleSupélec. 
+This repository contains the code related to the assignment on [Text Flappy Bird](https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym) of the "Reinforcement Learning" course at CentraleSupélec. 
