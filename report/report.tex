@@ -7,6 +7,7 @@
 \usepackage{hyperref}
 \usepackage{color}
 \usepackage{booktabs}
+\usepackage{subcaption}
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 
 \raggedbottom
@@ -28,7 +29,6 @@
   
 \begin{abstract}
 This report evaluates Monte Carlo Control and SARSA algorithms on state- and screen-based versions of the \href{https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym}{TextFlappyBird} environment. We analyze hyperparameter sensitivity, investigate policy transferability across configurations, and compare agent performance using rewards and scores. The report concludes with a discussion of observed trends and potential improvements. The code is available at \url{https://github.com/JeanJNMV/MDS-RL_Text_Flappy_Bird}.
-
 \keywords{Reinforcement Learning \and Deep Learning \and Monte Carlo Control \and SARSA \and TextFlappyBird}
 \end{abstract}
 %
@@ -46,14 +46,14 @@ By implementing these agents, this report aims to evaluate and compare their con
 \section{Implementation Details}
 \paragraph{Environment Setup and State Representation.} Both TFB variants share the
 same dynamics: the action space consists of two actions, $0$ (Idle) and $1$ (Flap),
-the agent receives a reward of $+1$ per step alive, and an episode terminates on
+the agent receives a reward of $+1$ per step alive (making the reward proportional to the score since the score increases by 1 for every 10 steps) and an episode terminates on
 collision. They differ only in their observation space. The simple version provides
 a tuple $(dx, dy)$ representing the horizontal and vertical distances to the center
 of the nearest pipe gap, restricting the state space to the most critical navigational
 information. The screen version instead exposes the full $20 \times 15$ game grid as
 a \texttt{gym.spaces.Box}, where each cell encodes an entity: $0$ (background),
 $1$ (alive player), $2$ (pipe), or $3$ (dead player), requiring the agent to
-implicitly extract geometric features from the raw spatial layout.
+implicitly extract geometric features from the raw spatial layout. 
 
 \paragraph{Agents and Algorithms.} We implemented two classical RL algorithms. Both utilize an $\epsilon$-greedy exploration strategy with exponential decay. For the screen environment, two complementary state representations are used. In the hash-based variant, the raw grid array is serialized into a nested tuple usable as a dictionary key, preserving full grid information at the cost of a large, non-generalizing state space. In the tile-coding variant, a compact feature vector $(d_x, d_y)$ is extracted from the screen and encoded using $8$ overlapping tilings over a $4\times4$ grid, enabling generalization across nearby states through linear function approximation.
 
@@ -73,7 +73,7 @@ In the simple environment, both agents learned effective policies, but MCC was m
 
 Figure~\ref{fig:state_value_policy} compares learned value functions and policies. In the simple and tile-coded settings, both agents learned similar value landscapes, with high values near the screen center (pipe gap), and converged almost to the same policy: often flap below the gap, idle above. With hash-based representation, no meaningful value function or policy could be visualized due to the large sparse state space. We can still observe that most states had zero value estimates, indicating failure to learn a coherent strategy.
 
-\paragraph{Hyperparameter Sensitivity Analysis.} We conducted a sensitivity analysis on key hyperparameters, including the learning rate $\alpha$, discount factor $\gamma$, and exploration rate $\epsilon$. We only considered the simple environment and the tile-based screen environment, as the hash-based agents did not learn meaningful policies. For each agent and environment, we varied one hyperparameter at a time while keeping the others fixed at their original values. The number of training episodes was reduced to 20\,000 and the number of explored values per hyperparameter was limited due to computational constraints. {\Large TODO: add details on the specific values explored for each hyperparameter and the results of the sensitivity analysis.}
+\paragraph{Hyperparameter Sensitivity Analysis.} We conducted a sensitivity analysis on key hyperparameters, including the learning rate $\alpha$, discount factor $\gamma$, and exploration rate $\epsilon$. We only considered the simple environment and the tile-based screen environment, as the hash-based agents did not learn meaningful policies. For each agent and environment, we varied one hyperparameter at a time while keeping the others fixed at their original values. The number of training episodes was reduced to 5\,000 and the number of explored values per hyperparameter was limited due to computational constraints. Figure~\ref{fig:sensitivity} in the Appendix shows the results of this analysis. {\Large TODO: add details on the specific values explored for each hyperparameter and the results of the sensitivity analysis.}
 
 \paragraph{Transferability of Learned Policies through Different Environment Configurations.} Here we evaluate the generalization of the learned policies across different environment configurations, specifically varying the screen dimensions and pipe gap. We trained the 3 variants of our best performing agent, the MCC, on the original configuration (\texttt{height=15}, \texttt{width=20}, \texttt{pipe\_gap=4}) and evaluated them on 7 new configurations, including shorter and taller screens and pipe gaps. Figure~\ref{fig:transferability} shows the results of this evaluation. Both the simple and tile-based agents showed the same degree of generalization, with strong performance for a wider pipe gap and a slightly shorter screen, but a significant drop in performance for all other configurations. This suggests that the learned policies rely heavily on the specific geometry of the training environment, and that even small changes in the layout can significantly impact performance. The hash-based agent, which already struggled to learn a good policy in the original configuration, performed poorly across all new configurations, further highlighting its lack of generalization capabilities.
 
@@ -81,6 +81,8 @@ Figure~\ref{fig:state_value_policy} compares learned value functions and policie
 Although some agents perform well in TFB, transferring them to the original \href{https://github.com/Talendar/flappy-bird-gym}{Flappy Bird Gym} faces key limitations. Agents in the simple environment depend on a compact $(dx, dy)$ observation not provided by the original game, requiring feature extraction. Hash-based screen agents are highly unfit for this task, as changes in resolution or layout create unseen states and invalidate the Q-table. Tile-coding agents are more promising due to their use of $(dx, dy)$ features and robustness to small variations, but they still require careful parameter tuning and may struggle with increased complexity, noise, faster dynamics, and richer visuals. More generally, all methods rely on tabular or linear representations that do not scale well to the original game's visual complexity. Prior work on Flappy Bird includes DQN-based methods \cite{appiah2018playing,chen2015deep}, genetic algorithms \cite{gan2022flappy}, tabular Q-learning \cite{vu2020flapai}, and neuroevolution \cite{brandao2019reinforcement}.
 
 \section{Conclusion}
+
+This study shows that both Monte Carlo Control and Sarsa can learn effective policies in TextFlappyBird, with MCC demonstrating greater stability and reliability overall. Feature representation plays a critical role, as tile coding enables strong generalization while hash-based methods fail in high-dimensional settings. Finally, limited transferability across environment variations highlights the need for more robust function approximation methods to handle increased complexity.
 
 \clearpage
 \appendix
@@ -129,6 +131,47 @@ Sarsa Tile & screen-v0 & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00
 \end{figure}
 
 \section{Figures for Hyperparameter Sensitivity Analysis}
+
+\begin{figure}[htbp]
+\centering
+
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/MCC_alpha.png}
+    \caption{MCC - Learning Rate $\alpha$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/MCC_gamma.png}
+    \caption{MCC - Discount Factor $\gamma$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/MCC_eps_decay.png}
+    \caption{MCC - Exploration Decay $\epsilon$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/Sarsa_alpha.png}
+    \caption{Sarsa - Learning Rate $\alpha$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/Sarsa_gamma.png}
+    \caption{Sarsa - Discount Factor $\gamma$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/Sarsa_lambda.png}
+    \caption{Sarsa - Trace Decay $\lambda$}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{figures/Sarsa_eps_decay.png}
+    \caption{Sarsa - Exploration Decay $\epsilon$}
+\end{subfigure}
+\caption{Sensitivity analysis of key hyperparameters for the MCC and Sarsa agents. Each plot shows the evaluation performance (score) as a function of the hyperparameter being varied, while keeping the other hyperparameters fixed at their original values. The base configuration used is: $\alpha=0.01$, $\gamma=0.99$, $\lambda=0.8$ (for Sarsa), and $\epsilon$ decay of 0.9998.}
+\label{fig:sensitivity} 
+\end{figure}
 % ---- Bibliography ----
 
 \bibliographystyle{splncs04}
