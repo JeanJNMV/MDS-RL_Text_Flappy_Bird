@@ -3,8 +3,13 @@
 \usepackage[T1]{fontenc}
 
 \usepackage{graphicx} 
-
-\usepackage{hyperref}
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-10pt \@plus -3pt \@minus -3pt}% space BEFORE
+  {5pt \@plus 5pt}% space AFTER
+  {\normalfont\large\bfseries}}
+\makeatother
+\usepackage{hyperref} 
 \usepackage{color}
 \usepackage{booktabs}
 \usepackage{subcaption}
@@ -29,6 +34,7 @@
   
 \begin{abstract}
 This report evaluates Monte Carlo Control and SARSA algorithms on state- and screen-based versions of the \href{https://gitlab-research.centralesupelec.fr/stergios.christodoulidis/text-flappy-bird-gym}{TextFlappyBird} environment. We analyze hyperparameter sensitivity, investigate policy transferability across configurations, and compare agent performance using rewards and scores. The report concludes with a discussion of observed trends and potential improvements. The code is available at \url{https://github.com/JeanJNMV/MDS-RL_Text_Flappy_Bird}.
+
 \keywords{Reinforcement Learning \and Deep Learning \and Monte Carlo Control \and SARSA \and TextFlappyBird}
 \end{abstract}
 %
@@ -37,9 +43,11 @@ This report evaluates Monte Carlo Control and SARSA algorithms on state- and scr
 
 \section{Introduction and Problem Definition}
 
-The objective of this project is to apply reinforcement learning (RL) techniques to master a simplified, terminal-based variant of the popular game Flappy Bird, known as Text Flappy Bird (TFB). In this environment, the player controls a simple unit-element character navigating through a series of pipe obstacles, aiming to maximize survival time and score. 
-The problem is modeled using two distinct variations of the TFB environment, provided via a custom OpenAI Gym implementation: the simple version and the screen  version. Each version presents unique challenges in terms of observation space and complexity, requiring different approaches to policy learning and value estimation. To solve this environment, we formulate the gameplay as a Markov Decision Process and investigate two specific RL algorithms: the Monte Carlo Control method and the Sarsa($\lambda$) algorithm.
-By implementing these agents, this report aims to evaluate and compare their convergence and overall performance across both environment versions. Furthermore, we conduct a sensitivity analysis on key hyperparameters and investigate the transferability of the learned policies to provide deeper insights into the behavior of both algorithms.
+The objective of this project is to apply reinforcement learning (RL) techniques to a simplified, terminal-based version of Flappy Bird called Text Flappy Bird (TFB). In this game, an agent controls a character navigating through pipe obstacles to maximize survival time and score. 
+
+We consider two variants of the environment, simple and screen, implemented using a custom OpenAI Gym framework, each with different levels of complexity and observation spaces. The problem is modeled as a Markov Decision Process, and we explore two RL algorithms: Monte Carlo Control and Sarsa($\lambda$).
+
+This report evaluates and compares their performance and convergence across both environments, along with a sensitivity analysis of key hyperparameters and an examination of policy transferability.
 
 \section{Implementation Details}
 \paragraph{Environment Setup and State Representation.} Both TFB variants share the
