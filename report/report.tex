@@ -45,9 +45,7 @@ This report evaluates Monte Carlo Control and SARSA algorithms on state- and scr
 
 The objective of this project is to apply reinforcement learning (RL) techniques to a simplified, terminal-based version of Flappy Bird called Text Flappy Bird (TFB). In this game, an agent controls a character navigating through pipe obstacles to maximize survival time and score. 
 
-We consider two variants of the environment, simple and screen, implemented using a custom OpenAI Gym framework, each with different levels of complexity and observation spaces. The problem is modeled as a Markov Decision Process, and we explore two RL algorithms: Monte Carlo Control and Sarsa($\lambda$).
-
-This report evaluates and compares their performance and convergence across both environments, along with a sensitivity analysis of key hyperparameters and an examination of policy transferability.
+We consider two variants of the environment, simple and screen, implemented using a custom OpenAI Gym framework, each with different levels of complexity and observation spaces. The problem is modeled as a Markov Decision Process and we explore two RL algorithms: Monte Carlo Control and Sarsa($\lambda$). This report evaluates and compares their performance and convergence across both environments, along with a sensitivity analysis of key hyperparameters and an examination of policy transferability.
 
 \section{Implementation Details}
 \paragraph{Environment Setup and State Representation.} Both TFB variants share the
@@ -66,14 +64,14 @@ implicitly extract geometric features from the raw spatial layout.
 The Monte Carlo Control (MCC) agent learns from complete episodes. At the end of each episode, the cumulative discounted return $G_t$ is computed backwards from the terminal state. The Q-values are updated for every visited state-action pair using a constant step-size $\alpha$:
 $Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha (G_t - Q(S_t, A_t))$. 
 
-The Sarsa($\lambda$) agent, in contrast, utilizes eligibility traces to propagate delayed rewards back to recently visited states more efficiently\cite{sutton2018reinforcement}. Our implementation increments an accumulating trace $E(s,a)$ upon visitation. The error $\delta_t$ and subsequent Q-value updates for all active traces are defined as:
+The Sarsa($\lambda$) agent, in contrast, utilizes eligibility traces to propagate delayed rewards back to recently visited states more efficiently \cite{sutton2018reinforcement}. Our implementation increments an accumulating trace $E(s,a)$ upon visitation. The error $\delta_t$ and subsequent Q-value updates for all active traces are defined as:
 $\delta_t = R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t)$ and
 $Q(s, a) \leftarrow Q(s, a) + \alpha \delta_t E(s, a)$.
 To optimize memory and computational performance during training, any traces that decay below a negligible threshold ($1 \times 10^{-10}$) are dynamically deleted.
 
 
 \section{Evaluation and Results}
-\paragraph{Performance Comparison between Monte Carlo Control and SARSA.} Agents were trained for 25\,000 episodes and evaluated over 200 episodes (fewer for tile coding due to slower inference) on the training setup (\texttt{height=15}, \texttt{width=20}, \texttt{pipe\_gap=4}), with a 50\,000-step cap per episode (max score: 4999). Figure~\ref{fig:train_scores} shows training curves and Table~\ref{tab:results} reports results. Due to a heavily skewed score distribution, the median better reflects typical performance than the mean, which is influenced by rare high scores and often too close to the standard deviation.
+\paragraph{Performance Comparison between Monte Carlo Control and SARSA.} Agents were trained for 25\,000 episodes and evaluated over 200 episodes (fewer for tile coding due to slower inference) on the setup (\texttt{height=15}, \texttt{width=20}, \texttt{pipe\_gap=4}), with a 50\,000-step cap per episode (max score: 4999). Figure~\ref{fig:train_scores} shows training curves and Table~\ref{tab:results} reports results. Due to a heavily skewed score distribution, the median better reflects typical performance than the mean, which is influenced by rare high scores and often too close to the standard deviation.
 
 \begin{figure}[ht]
     \centering
@@ -92,9 +90,9 @@ To optimize memory and computational performance during training, any traces tha
 \textbf{Agent} & \textbf{Env} & \textbf{Mean Rew.} & \textbf{Std Rew.} & \textbf{Mean Score} & \textbf{Std Score} & \textbf{Med.\ Rew.} & \textbf{Med.\ Score} \\
 \hline
 MCC        & v0        & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00 \\
-Sarsa      & v0        &  7489.6 & 8028.2 &  747.66 & 802.82 &  4338.0 &  432.50 \\
-MCC        & screen-v0 &    53.5 &   36.8 &    4.11 &   3.67 &    43.0 &    3.00 \\
-Sarsa      & screen-v0 &    22.9 &   14.5 &    1.06 &   1.47 &    19.0 &    1.00 \\
+Sarsa      & v0        & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00 \\
+MCC        & screen-v0 &    58.6 &   52.2 &    4.59 &   5.21 &    41.5 &    3.00 \\
+Sarsa      & screen-v0 &    25.9 &   16.8 &    1.40 &   1.68 &    23.0 &    1.00 \\
 MCC Tile   & screen-v0 & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00 \\
 Sarsa Tile & screen-v0 & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00 \\
 \hline
@@ -103,7 +101,7 @@ Sarsa Tile & screen-v0 & 50000.0 &    0.0 & 4999.00 &   0.00 & 50000.0 & 4999.00
 \label{tab:results}
 \end{table}
 
-In the simple environment, both agents learned effective policies, but MCC was more stable at evaluation, consistently reaching 4999, while Sarsa remained less stable despite similar training scores. In the screen environment, tile coding proved to be essential. Both MCC and Sarsa with tile coding achieved maximal evaluation performance, whereas hash-based agents failed to generalize across the large state space, producing much lower scores. The overall gap in performance between MCC and Sarsa could stem from Sarsa's bootstrapping, where Q-updates depend on current next-state estimates, introducing variance, while MCC uses full episode returns, yielding lower-variance and more reliable estimates in this case.
+In the simple environment, both agents learned effective policies, achieving the maximum score of 4999 with zero variance. However, MCC showed to be more unstable, as some runs failed to converge during the experiments, while Sarsa consistently reached its optimal performance across all runs. This could be attributed to Sarsa's use of eligibility traces, which can help propagate rewards more efficiently and stabilize learning, while MCC relies on complete episode returns that can introduce higher variance in updates. In the screen environment, tile coding proved to be essential. Both MCC and Sarsa with tile coding achieved maximal evaluation performance, whereas hash-based agents failed to generalize across the large state space, producing much lower scores. 
 
 Figure~\ref{fig:state_value_policy} compares learned value functions and policies. In the simple and tile-coded settings, both agents learned similar value landscapes, with high values near the screen center (pipe gap), and converged almost to the same policy: often flap below the gap, idle above. With the hash-based representation, no meaningful value function or policy could be visualized due to the large sparse state space. We can still observe that most states had zero value estimates, indicating its failure to learn a coherent strategy.
 
@@ -116,7 +114,7 @@ Figure~\ref{fig:state_value_policy} compares learned value functions and policie
     \label{fig:state_value_policy}
 \end{figure}
 
-\paragraph{Transferability of Learned Policies through Different Environment Configurations.} We evaluate the generalization of the learned policies across different environment configurations, specifically varying the screen dimensions and pipe gap. We trained the 3 variants of our best performing agent, the MCC, on the original configuration (\texttt{height=15}, \texttt{width=20}, \texttt{pipe\_gap=4}) and evaluated them on 7 new configurations, including shorter and taller screens and pipe gaps. Figure~\ref{fig:transferability} shows the results of this evaluation. Both the simple and tile-based agents showed the same degree of generalization, with strong performance for a wider pipe gap and a slightly shorter screen, but a significant drop in performance for all other configurations. This suggests that the learned policies rely heavily on the specific geometry of the training environment, and that even small changes in the layout can significantly impact performance. The hash-based agent, which already struggled to learn a good policy in the original configuration, performed poorly across all new configurations, further highlighting its lack of generalization capabilities.
+\paragraph{Transferability of Learned Policies through Different Environment Configurations.} We evaluate the generalization of the learned policies across different environment configurations, specifically varying the screen dimensions and pipe gap. We trained the 3 variants of the MCC, the more robust agents during hyperparameter sensitivity analysis and the less computationally expensive to train, on the original configuration (\texttt{height=15}, \texttt{width=20}, \texttt{pipe\_gap=4}) and evaluated them on 7 new configurations, including shorter and taller screens and pipe gaps. Figure~\ref{fig:transferability} shows the results of this evaluation. Both the simple and tile-based agents showed the same degree of generalization, with strong performance for a wider pipe gap and a slightly shorter screen, but a significant drop in performance for all other configurations. This suggests that the learned policies rely heavily on the specific geometry of the training environment, and that even small changes in the layout can significantly impact performance. The hash-based agent, which already struggled to learn a good policy in the original configuration, performed poorly across all new configurations, further highlighting its lack of generalization capabilities.
  
 \begin{figure}[ht]
     \centering
@@ -130,7 +128,7 @@ Although some agents perform well in TFB, transferring them to the original \hre
 
 \section{Conclusion}
 
-This study shows that both Monte Carlo Control and Sarsa can learn effective policies in TextFlappyBird, with MCC demonstrating greater stability and reliability overall. Feature representation plays a critical role, as tile coding enables strong generalization while hash-based methods fail in high-dimensional settings. Finally, limited transferability across environment variations highlights the need for more robust function approximation methods to handle increased complexity.
+This study shows that both Monte Carlo Control and Sarsa can learn effective policies in TextFlappyBird. Feature representation plays a critical role, as tile coding enables strong generalization while hash-based methods fail in high-dimensional settings. Finally, limited transferability across environment variations highlights the need for more robust function approximation methods to handle increased complexity.
 
 % ---- Bibliography ----
 {\footnotesize
